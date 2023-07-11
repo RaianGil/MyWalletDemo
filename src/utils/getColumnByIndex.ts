@@ -1,0 +1,1 @@
+export const getColumnByIndex = (object:any, index:number) => object[Object.keys(object)[index]]

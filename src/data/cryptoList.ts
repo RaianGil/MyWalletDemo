@@ -1,0 +1,21 @@
+export const cryptoList = [
+  { symbol: "BTC", name: "bitcoin" },
+  { symbol: "ETH", name: "ethereum" },
+  { symbol: "USDT", name: "tether" },
+  { symbol: "BNB", name: "bnb" },
+  { symbol: "USDC", name: "usd-coin" },
+  { symbol: "XRP", name: "xrp" },
+  { symbol: "ADA", name: "cardano" },
+  { symbol: "SOL", name: "solana" },
+  { symbol: "TRX",name: "tron" },
+  { symbol: "LTC", name: "litecoin" },
+  { symbol: "MATIC", name: "polygon" },
+  { symbol: "DOT", name: "polkadot" },
+  { symbol: "SHIB", name: "shiba-inu" },
+  { symbol: "AVAX", name: "avalanche" },
+  { symbol: "DOGE", name: "dogecoin" },
+  { symbol: "BUSD", name: "binance-usd" },
+  { symbol: "XMR", name: "monero" },
+  { symbol: "XLM", name: "stellar" },
+  { symbol: "CHZ", name: "chiliz" }
+]
