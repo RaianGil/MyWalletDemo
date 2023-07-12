@@ -22,7 +22,11 @@ export const sell = (req: Request, res: Response) => {
 
 export const changePrice = async (req: Request, res: Response) => {
   const ops = await futuresOps.getOpsBySymbol(req.params.symbolName).then(resp => resp)
-  const currPrice = ws.getPrice(req.params.symbolName)
-  var prueba = ops.map((op:any) => ({...op._doc, gain: (currPrice - op.entryPrice) * ((op.amount ?? 0) * ((currPrice - op.entryPrice) > 0 ? .99 : 1))}))
+  const currPrice = req.body.currPrice
+  var prueba = ops.map((op:any) => ({...op._doc, 
+    gain: 
+      (op.operationType == 'BUY' ? (currPrice - op.entryPrice) : -(currPrice - op.entryPrice)) * 
+      ((op.amount ?? 0) * 
+      ((currPrice - op.entryPrice) > 0 ? .99 : 1))}))
   res.status(200).json({data: [prueba]})
 }

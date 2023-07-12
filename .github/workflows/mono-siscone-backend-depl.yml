@@ -1,0 +1,167 @@
+name: my-wallet-demo
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: "my-wallet-demo"
+
+jobs:
+  sonarqube:
+    name: Analisis de codigo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: sonarsource/sonarqube-scan-action@master
+        name: Ejecutando sonarqube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  
+  update-version:
+    name: actualizar version
+    runs-on: ubuntu-latest
+    outputs:
+      output: ${{ steps.step.outputs.version }}
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: actualizando version
+        id: step
+        shell: pwsh
+        run: |
+          ./.github/workflows/scripts/Update-Version.ps1 `
+            -Changelog './CHANGELOG.md' `
+            -Branch "$Env:GITHUB_REF_NAME" `
+            -URL "$Env:GITHUB_REPOSITORY" `
+            -AuthorName "$Env:GITHUB_ACTOR" `
+            -AuthorEmail "$Env:GIT_EMAIL" `
+            -PathPackageJson . `
+            -Stage "develop" `
+            -Type "npm"
+        env:
+          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+
+  build:
+    name: build imagen docker
+    runs-on: ubuntu-latest
+    needs: update-version
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest .
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Push Docker image
+        run: |
+          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{needs.update-version.outputs.output}}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{needs.update-version.outputs.output}}
+
+  deploy-dev:
+    name: deploy dev
+    runs-on: ubuntu-latest
+    needs: [update-version, build]
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout to Aplicaciones VimCash
+        uses: actions/checkout@master
+        with:
+          repository: vimcash/Aplicaciones_VimCash
+          token: ${{ secrets.ACTIONS_TOKEN }}
+      - name: deplegando en dev
+        shell: pwsh
+        run: |
+          ./OKE-dev-prod/apps/vimcash/overlays/dev/tools/update-dev.ps1 `
+            -Version "$Env:VERSION" `
+            -Email "$Env:GIT_EMAIL" `
+            -User "$Env:GITHUB_ACTOR" `
+            -IaC_Repo_Path "OKE-dev-prod/apps/vimcash/overlays/dev/tools" `
+            -APP_Name "$Env:APP_NAME" `
+        env:
+          VERSION: ${{needs.update-version.outputs.output}}
+          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+          APP_NAME: ${{ env.IMAGE_NAME }}
+          ARGOCD_USERNAME: ${{ secrets.ARGOCD_USERNAME }}
+          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+        continue-on-error: true
+      - name: Check on failures Prod
+        if: steps.gitvalue.outcome != 'success'
+        run: exit 0
+
+  # deploy-prod:
+  #   name: Deploy prod
+  #   runs-on: ubuntu-latest
+  #   needs: [update-version, build, deploy-dev]
+
+  #   if: github.event_name != 'pull_request'
+  #   steps:
+  #     - uses: trstringer/manual-approval@v1
+  #       with:
+  #         secret: ${{ github.TOKEN }}
+  #         approvers: eloyk
+  #         minimum-approvals: 1
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+
+  #     - name: actualizando version en prod
+  #       id: step
+  #       shell: pwsh
+  #       run: |
+  #         ./.github/workflows/scripts/Update-Version.ps1 `
+  #           -Changelog './CHANGELOG.md' `
+  #           -Branch "$Env:GITHUB_REF_NAME" `
+  #           -URL "$Env:GITHUB_REPOSITORY" `
+  #           -AuthorName "$Env:GITHUB_ACTOR" `
+  #           -AuthorEmail "$Env:GIT_EMAIL" `
+  #           -PathPackageJson . `
+  #           -Stage "main" `
+  #           -Type "npm"
+  #       env:
+  #         GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+
+  #     - name: Publish Docker image
+  #       run: |
+  #         docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  #         docker buildx imagetools create ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{needs.update-version.outputs.output}} --tag ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.step.outputs.version }}
+
+  #     - name: Checkout to Aplicaciones VimCash
+  #       uses: actions/checkout@master
+  #       with:
+  #         repository: vimcash/Aplicaciones_VimCash
+  #         token: ${{ secrets.ACTIONS_TOKEN }}
+  #     - name: desplegando en prod
+  #       shell: pwsh
+  #       run: |
+  #         ./OKE-dev-prod/apps/vimcash/overlays/prod/tools/update-prod.ps1 `
+  #           -Version "$Env:VERSION" `
+  #           -Email "$Env:GIT_EMAIL" `
+  #           -User "$Env:GITHUB_ACTOR" `
+  #           -IaC_Repo_Path "OKE-dev-prod/apps/vimcash/overlays/prod/tools" `
+  #           -APP_Name "$Env:APP_NAME" `
+  #           -Argocd_Name "$Env:ARGOCD_USERNAME" `
+  #           -Argocd_Pass "$Env:ARGOCD_PASSWORD"
+  #       env:
+  #         VERSION: ${{ steps.step.outputs.version }}
+  #         GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+  #         APP_NAME: ${{ env.IMAGE_NAME }}
+  #         ARGOCD_USERNAME: ${{ secrets.ARGOCD_USERNAME }}
+  #         ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+  #       continue-on-error: true
+  #     - name: Check on failures Prod
+  #       if: steps.gitvalue.outcome != 'success'
+  #       run: exit 0

@@ -1,0 +1,34 @@
+{
+  "VersionPrefix": "v",
+  "LatestTagName": "latest",
+  "StableTagName": "stable",
+  "Branches": [
+    {
+      "Name": "^develop$",
+      "IsStable": false,
+      "Sufix": "-beta.",
+      "GenerateChangelog": true
+    },
+    {
+      "Name": "^main$",
+      "IsStable": true,
+      "GenerateChangelog": true
+    }
+  ],
+  "Keywords": {
+    "Versions": {
+      "Major": "major",
+      "Minor": "minor",
+      "Patch": "patch"
+    },
+    "Changelog": {
+      "Placeholder": "<!-- [NEXT_ENTRY] -->",
+      "Added": "added",
+      "Changed": "changed",
+      "Removed": "removed",
+      "Fixed": "fixed",
+      "Deprecated": "deprecated",
+      "Security": "security"
+    }
+  }
+}
