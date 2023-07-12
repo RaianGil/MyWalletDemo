@@ -24,7 +24,7 @@ $Config = Get-Content "${PSScriptRoot}/config.json" | ConvertFrom-Json
 
 # Get the branch config from the configuration file
 $BranchConfig = $Config.Branches | Where-Object { $Stage -Match $_.Name }
-Write-Host -F Yellow "TOKEN: ${TOKEN}"
+Write-Host -F Yellow "TOKEN: ${TOKEN}, "
 If (-Not $BranchConfig ) {
   Write-Host -F Yellow "Branch ${Stage} is not configured"
   Write-Host -F Yellow "Skipping..."
