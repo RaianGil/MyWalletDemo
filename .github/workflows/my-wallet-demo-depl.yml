@@ -86,13 +86,13 @@ jobs:
       - name: deplegando en dev
         shell: pwsh
         run: |
+          Write-Host 'Token ${{ secrets.ACTIONS_TOKEN }}' `
           ./OKE-dev-prod/apps/vimcash/overlays/dev/tools/update-dev.ps1 `
             -Version "$Env:VERSION" `
             -Email "$Env:GIT_EMAIL" `
             -User "$Env:GITHUB_ACTOR" `
             -IaC_Repo_Path "OKE-dev-prod/apps/vimcash/overlays/dev/tools" `
             -APP_Name "$Env:APP_NAME" `
-            Write-Host 'Token ${{ secrets.ACTIONS_TOKEN }}' `
         env:
           VERSION: ${{needs.update-version.outputs.output}}
           GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
