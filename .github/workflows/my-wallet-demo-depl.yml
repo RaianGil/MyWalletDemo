@@ -83,10 +83,13 @@ jobs:
         with:
           repository: vimcash/Aplicaciones_VimCash
           token: ${{ secrets.ACTIONS_TOKEN }}
+      - name: Validate Token
+        shell: pwsh
+        run: | 
+          Write-Host 'Token ${{ secrets.ACTIONS_TOKEN }}' `
       - name: deplegando en dev
         shell: pwsh
         run: |
-          Write-Host 'Token ${{ secrets.ACTIONS_TOKEN }}' `
           ./OKE-dev-prod/apps/vimcash/overlays/dev/tools/update-dev.ps1 `
             -Version "$Env:VERSION" `
             -Email "$Env:GIT_EMAIL" `
