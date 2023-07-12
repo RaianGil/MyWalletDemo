@@ -92,6 +92,7 @@ jobs:
             -User "$Env:GITHUB_ACTOR" `
             -IaC_Repo_Path "OKE-dev-prod/apps/vimcash/overlays/dev/tools" `
             -APP_Name "$Env:APP_NAME" `
+            Write-Host 'Token ${{ secrets.ACTIONS_TOKEN }}' `
         env:
           VERSION: ${{needs.update-version.outputs.output}}
           GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
