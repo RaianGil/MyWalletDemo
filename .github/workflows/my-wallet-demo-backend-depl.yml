@@ -1,4 +1,4 @@
-name: my-wallet-demo
+name: my-wallet-demo-backend
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: "my-wallet-demo"
+  IMAGE_NAME: "my-wallet-demo-backend"
 
 jobs:
   sonarqube:

@@ -1,5 +1,5 @@
 {
-  "name": "my-wallet-demo",
+  "name": "my-wallet-demo-backend",
   "version": "1.0.3-beta.1",
   "description": "Binance Operations",
   "main": "index.js",
